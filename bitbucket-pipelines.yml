@@ -25,7 +25,7 @@ pipelines:
           script:
             - echo "${!ORG}" > env.sfdx
             - sfdx force:auth:sfdxurl:store -d -a ${ORG} -f env.sfdx
-            - vlocity runAllTestProcedures -job ${TEST_SUITE_FILE_NAME} -sfdx.username ${ORG} --verbose true --simpleLogging true 
+            - vlocity runTestProcedure -job ${TEST_SUITE_FILE_NAME} -sfdx.username ${ORG} --verbose true --simpleLogging true 
     runAllTest:
       - variables:          
         - name: ORG
