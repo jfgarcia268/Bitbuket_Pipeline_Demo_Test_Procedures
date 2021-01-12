@@ -1,0 +1,69 @@
+# Doc: https://confluence.atlassian.com/bitbucket/configure-bitbucket-pipelines-yml-792298910.html
+image: jfgarcia268/sfdx_vlocity_java:latest
+pipelines:
+  branches:
+    dev:
+      - step:
+          name: SF Deploy
+          script:
+            - echo ${SIT_CI_SFDX_URL} > env.sfdx
+            - sfdx force:auth:sfdxurl:store -d -a ${SIT_CI_SFDX_URL} -f env.sfdx
+            - sfdx force:source:deploy --sourcepath salesforce_sfdx --targetusername ${SIT_CI_SFDX_URL} --verbose
+      - step:
+          name: Vlocity Deploy
+          script:
+           - echo ${SIT_CI_SFDX_URL} > env.sfdx
+           - sfdx force:auth:sfdxurl:store -d -a ${SIT_CI_SFDX_URL} -f env.sfdx
+           - vlocity -sfdx.username ${SIT_CI_SFDX_URL} -job jobs/deploy.yaml packDeploy --verbose true --simpleLogging true 
+  custom:
+    runTest:
+      - variables:          
+        - name: TEST_SUITE_FILE_NAME
+        - name: ORG
+      - step:
+          name: Run Test
+          script:
+            - echo "${!ORG}" > env.sfdx
+            - echo "testKeys:" > TestToRun.yaml
+            - echo "  - ${TEST_SUITE_FILE_NAME}" >> TestToRun.yaml
+            - sfdx force:auth:sfdxurl:store -d -a ${ORG} -f env.sfdx
+            - vlocity runAllTestProcedures -job TestToRun.yaml -sfdx.username ${ORG} --verbose true --simpleLogging true 
+    runAllTest:
+      - variables:          
+        - name: ORG
+      - step:
+          name: Run All Test
+          script:
+            - echo "${!ORG}" > env.sfdx
+            - sfdx force:auth:sfdxurl:store -d -a ${ORG} -f env.sfdx
+            - vlocity runAllTestProcedures --nojob -sfdx.username ${ORG} --verbose true --simpleLogging true     
+    prodDeploy:
+      - step:
+          name: SF Deploy
+          script:
+            - echo ${MASTER_PROD_SFDX_URL} > env.sfdx
+            - sfdx force:auth:sfdxurl:store -d -a ${MASTER_PROD_SFDX_URL} -f env.sfdx
+            - sfdx force:source:deploy --sourcepath salesforce_sfdx --targetusername ${MASTER_PROD_SFDX_URL} --verbose
+      - step:
+          name: Vlocity Deploy
+          script:
+           - echo ${MASTER_PROD_SFDX_URL} > env.sfdx
+           - sfdx force:auth:sfdxurl:store -d -a ${MASTER_PROD_SFDX_URL} -f env.sfdx
+           - vlocity -sfdx.username ${MASTER_PROD_SFDX_URL} -job jobs/deploy.yaml packDeploy --verbose true --simpleLogging true
+    UATDeploy:
+      - step:
+          name: SF Deploy
+          script:
+            - echo ${UAT_SFDX_URL} > env.sfdx
+            - sfdx force:auth:sfdxurl:store -d -a ${UAT_SFDX_URL} -f env.sfdx
+            - sfdx force:source:deploy --sourcepath salesforce_sfdx --targetusername ${UAT_SFDX_URL} --verbose
+      - step:
+          name: Vlocity Deploy
+          script:
+           - echo ${UAT_SFDX_URL} > env.sfdx
+           - sfdx force:auth:sfdxurl:store -d -a ${UAT_SFDX_URL} -f env.sfdx
+           - vlocity -sfdx.username ${UAT_SFDX_URL} -job jobs/deploy.yaml packDeploy --verbose true --simpleLogging true
+      - step:
+          name: Run All Test Procedures
+          script:
+           - vlocity runAllTestProcedures --nojob -sfdx.username ${UAT_SFDX_URL} --verbose true --simpleLogging true 
