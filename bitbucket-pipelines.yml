@@ -24,10 +24,8 @@ pipelines:
           name: Run Test
           script:
             - echo "${!ORG}" > env.sfdx
-            - echo "testKeys:" > TestToRun.yaml
-            - echo "  - ${TEST_SUITE_FILE_NAME}" >> TestToRun.yaml
             - sfdx force:auth:sfdxurl:store -d -a ${ORG} -f env.sfdx
-            - vlocity runAllTestProcedures -job TestToRun.yaml -sfdx.username ${ORG} --verbose true --simpleLogging true 
+            - vlocity runAllTestProcedures -job ${TEST_SUITE_FILE_NAME} -sfdx.username ${ORG} --verbose true --simpleLogging true 
     runAllTest:
       - variables:          
         - name: ORG
